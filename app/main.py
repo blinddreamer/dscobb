@@ -39,7 +39,7 @@ async def do_appraise(request: Request, items: str = Form(...)):
     if not items.strip():
         return templates.TemplateResponse(
             request, "index.html",
-            {"error": "Please paste some items", "paste": items},
+            {"error": "Please paste some items", "paste": items, "config_pct": config.buyback_percentage},
         )
 
     try:
@@ -50,6 +50,7 @@ async def do_appraise(request: Request, items: str = Form(...)):
             {
                 "error": "Price service unavailable, try again later",
                 "paste": items,
+                "config_pct": config.buyback_percentage,
             },
         )
 

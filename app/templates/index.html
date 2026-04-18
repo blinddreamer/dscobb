@@ -116,7 +116,7 @@
     <div class="grand-total">Total: {{ "{:,.2f}".format(grand_total) }} ISK</div>
     {% else %}
     <p class="empty">No accepted items.</p>
-    <div class="grand-total">Total: 0.00 ISK</div>
+    <div class="grand-total">Total: {{ "{:,.2f}".format(grand_total) }} ISK</div>
     {% endif %}
 
     {% if rejected %}
