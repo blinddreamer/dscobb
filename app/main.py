@@ -28,7 +28,8 @@ class RejectedItem:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse(request, "index.html")
+    config = get_config()
+    return templates.TemplateResponse(request, "index.html", {"config_pct": config.buyback_percentage})
 
 
 @app.post("/appraise", response_class=HTMLResponse)
