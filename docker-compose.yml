@@ -4,5 +4,6 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Example values — override for your deployment
       - ALLOWED_CATEGORIES=Ice
       - BUYBACK_PERCENTAGE=90

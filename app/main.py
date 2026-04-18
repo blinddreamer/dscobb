@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from typing import List
 
@@ -9,7 +10,7 @@ from app.config import get_config
 from app.janice import appraise, AppraisalError
 
 app = FastAPI()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
 
 @dataclass
