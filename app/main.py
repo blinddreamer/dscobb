@@ -56,7 +56,7 @@ async def do_appraise(request: Request, items: str = Form(...)):
     rejected: List[RejectedItem] = []
 
     for item in raw_items:
-        if item.buy_price == 0.0:
+        if item.buy_price <= 0.0:
             rejected.append(RejectedItem(name=item.name, reason="not found"))
             continue
 

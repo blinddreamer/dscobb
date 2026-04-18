@@ -114,6 +114,20 @@ def test_post_appraise_rejects_not_found_item(monkeypatch):
     assert "not found" in response.text
 
 
+def test_post_appraise_accepts_item_matching_category_name(monkeypatch):
+    # category_name (not group_name) matches ALLOWED_CATEGORIES
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "Asteroid")
+    item = AppraisalItem(name="Glacial Mass", quantity=10, buy_price=10000.0, group_name="Ice", category_name="Asteroid")
+
+    client = get_client()
+    with patch("app.main.appraise", new=AsyncMock(return_value=[item])):
+        response = client.post("/appraise", data={"items": "Glacial Mass\t10"})
+
+    assert response.status_code == 200
+    assert "Glacial Mass" in response.text
+    assert "not accepted" not in response.text
+
+
 def test_post_appraise_all_rejected_grand_total_zero(monkeypatch):
     monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
     items = [make_item("Tritanium", 1000, 5.0, "Mineral")]
