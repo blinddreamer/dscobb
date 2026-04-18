@@ -28,7 +28,7 @@ class RejectedItem:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 @app.post("/appraise", response_class=HTMLResponse)
@@ -37,17 +37,16 @@ async def do_appraise(request: Request, items: str = Form(...)):
 
     if not items.strip():
         return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "error": "Please paste some items", "paste": items},
+            request, "index.html",
+            {"error": "Please paste some items", "paste": items},
         )
 
     try:
         raw_items = await appraise(items)
     except AppraisalError:
         return templates.TemplateResponse(
-            "index.html",
+            request, "index.html",
             {
-                "request": request,
                 "error": "Price service unavailable, try again later",
                 "paste": items,
             },
@@ -84,9 +83,8 @@ async def do_appraise(request: Request, items: str = Form(...)):
     grand_total = sum(a.subtotal for a in accepted)
 
     return templates.TemplateResponse(
-        "index.html",
+        request, "index.html",
         {
-            "request": request,
             "accepted": accepted,
             "rejected": rejected,
             "grand_total": grand_total,
