@@ -40,11 +40,16 @@ async def appraise(paste: str) -> List[AppraisalItem]:
                 content=paste.encode(),
             )
             response.raise_for_status()
-    except (httpx.TimeoutException, httpx.HTTPStatusError) as exc:
+    except (httpx.RequestError, httpx.HTTPStatusError) as exc:
         raise AppraisalError(str(exc)) from exc
 
+    try:
+        data = response.json()
+    except Exception as exc:
+        raise AppraisalError(f"Invalid JSON from Janice: {exc}") from exc
+
     items = []
-    for raw in response.json().get("items", []):
+    for raw in data.get("items", []):
         item_type = raw.get("itemType", {})
         prices = raw.get("effectivePrices", {})
         items.append(
