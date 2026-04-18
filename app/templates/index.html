@@ -124,6 +124,19 @@
         border-left: 3px solid #4080c8;
         color: #7aaad4;
       }
+      .meta {
+        font-size: 0.82rem;
+        color: #555;
+        margin-bottom: 20px;
+        line-height: 1.8;
+      }
+      .meta a {
+        color: #7aaad4;
+        text-decoration: none;
+      }
+      .meta a:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
@@ -138,6 +151,17 @@
     {% else %}
     <div class="banner info">No categories configured — nothing will be priced.</div>
     {% endif %}
+
+    <div class="meta">
+      Buying from:
+      <a href="https://evemaps.dotlan.net/system/4-HWWF" target="_blank">4-HWWF</a>,
+      <a href="https://evemaps.dotlan.net/system/3A1P-N" target="_blank">3A1P-N</a>,
+      <a href="https://evemaps.dotlan.net/system/OY-UZ1" target="_blank">OY-UZ1</a>
+      &nbsp;·&nbsp;
+      Contract to: <a href="https://evewho.com/pilot/Gnomcho%20Kraitan" target="_blank">Gnomcho Kraitan</a>
+      <br>
+      Ore and ice must be compressed.
+    </div>
 
     {% if error %}
     <div class="banner error">{{ error }}</div>
