@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+<form method="post" action="/appraise">
+<textarea name="items">{{ paste or "" }}</textarea>
+<button type="submit">Submit</button>
+</form>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+{% if accepted is defined %}
+{% for item in accepted %}
+<tr><td>{{ item.name }}</td><td>{{ "{:,}".format(item.quantity) }}</td><td>{{ "{:,.2f}".format(item.unit_price) }}</td><td>{{ "{:,.2f}".format(item.subtotal) }}</td></tr>
+{% endfor %}
+Total: {{ "{:,.2f}".format(grand_total) }}
+{% for item in rejected %}
+{{ item.name }}: {{ item.reason }}
+{% endfor %}
+{% endif %}
+</body>
+</html>
