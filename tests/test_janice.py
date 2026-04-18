@@ -7,40 +7,65 @@ from app.janice import appraise, AppraisalItem, AppraisalError
 SAMPLE_RESPONSE = {
     "items": [
         {
-            "itemType": {
-                "name": "Glacial Mass",
-                "groupName": "Ice",
-                "categoryName": "Asteroid",
-            },
+            "itemType": {"eid": 16262, "name": "Glacial Mass", "volume": 1000.0},
             "amount": 100,
-            "effectivePrices": {"buy": 10000.0},
+            "effectivePrices": {"buyPrice": 10000.0},
         },
         {
-            "itemType": {
-                "name": "Tritanium",
-                "groupName": "Mineral",
-                "categoryName": "Material",
-            },
+            "itemType": {"eid": 34, "name": "Tritanium", "volume": 0.01},
             "amount": 1000,
-            "effectivePrices": {"buy": 5.0},
+            "effectivePrices": {"buyPrice": 5.0},
         },
     ]
 }
 
+ESI_TYPES = {
+    16262: {"type_id": 16262, "name": "Glacial Mass", "group_id": 465},
+    34: {"type_id": 34, "name": "Tritanium", "group_id": 18},
+}
+ESI_GROUPS = {
+    465: {"group_id": 465, "name": "Ice", "category_id": 25},
+    18: {"group_id": 18, "name": "Mineral", "category_id": 4},
+}
+ESI_CATEGORIES = {
+    25: {"category_id": 25, "name": "Asteroid"},
+    4: {"category_id": 4, "name": "Material"},
+}
 
-def make_mock_client(status_code: int, json_body: dict):
-    mock_response = MagicMock()
-    mock_response.status_code = status_code
-    mock_response.json.return_value = json_body
-    if status_code >= 400:
-        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "error", request=MagicMock(), response=mock_response
+
+def _make_esi_response(data):
+    r = MagicMock()
+    r.status_code = 200
+    r.json.return_value = data
+    return r
+
+
+def make_mock_client(janice_status: int, janice_body: dict):
+    janice_response = MagicMock()
+    janice_response.status_code = janice_status
+    janice_response.json.return_value = janice_body
+    if janice_status >= 400:
+        janice_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "error", request=MagicMock(), response=janice_response
         )
     else:
-        mock_response.raise_for_status = MagicMock()
+        janice_response.raise_for_status = MagicMock()
+
+    async def mock_get(url, **kwargs):
+        if "/universe/types/" in url:
+            type_id = int(url.split("/universe/types/")[1].rstrip("/"))
+            return _make_esi_response(ESI_TYPES.get(type_id, {}))
+        elif "/universe/groups/" in url:
+            group_id = int(url.split("/universe/groups/")[1].rstrip("/"))
+            return _make_esi_response(ESI_GROUPS.get(group_id, {}))
+        elif "/universe/categories/" in url:
+            cat_id = int(url.split("/universe/categories/")[1].rstrip("/"))
+            return _make_esi_response(ESI_CATEGORIES.get(cat_id, {}))
+        return _make_esi_response({})
 
     mock_client = AsyncMock()
-    mock_client.post = AsyncMock(return_value=mock_response)
+    mock_client.post = AsyncMock(return_value=janice_response)
+    mock_client.get = mock_get
 
     mock_cm = MagicMock()
     mock_cm.__aenter__ = AsyncMock(return_value=mock_client)
