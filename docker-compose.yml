@@ -1,0 +1,8 @@
+services:
+  buyback:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ALLOWED_CATEGORIES=Ice
+      - BUYBACK_PERCENTAGE=90
