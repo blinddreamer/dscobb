@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Corp Buyback</title>
+    <title>Huku's Buyback</title>
     <style>
       * {
         box-sizing: border-box;
@@ -119,6 +119,11 @@
         font-size: 0.88rem;
         margin-top: 10px;
       }
+      .banner.info {
+        background: #0a1a2a;
+        border-left: 3px solid #4080c8;
+        color: #7aaad4;
+      }
     </style>
   </head>
   <body>
@@ -127,6 +132,12 @@
       Paste your items below. Prices are {{ "%.0f"|format((config_pct or 0.9) *
       100) }}% of Jita buy.
     </p>
+
+    {% if allowed_categories %}
+    <div class="banner info">Buying: {{ allowed_categories | join(", ") }}</div>
+    {% else %}
+    <div class="banner info">No categories configured — nothing will be priced.</div>
+    {% endif %}
 
     {% if error %}
     <div class="banner error">{{ error }}</div>

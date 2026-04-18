@@ -30,7 +30,10 @@ class RejectedItem:
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     config = get_config()
-    return templates.TemplateResponse(request, "index.html", {"config_pct": config.buyback_percentage})
+    return templates.TemplateResponse(request, "index.html", {
+        "config_pct": config.buyback_percentage,
+        "allowed_categories": config.allowed_categories,
+    })
 
 
 @app.post("/appraise", response_class=HTMLResponse)
@@ -40,7 +43,7 @@ async def do_appraise(request: Request, items: str = Form(...)):
     if not items.strip():
         return templates.TemplateResponse(
             request, "index.html",
-            {"error": "Please paste some items", "paste": items, "config_pct": config.buyback_percentage},
+            {"error": "Please paste some items", "paste": items, "config_pct": config.buyback_percentage, "allowed_categories": config.allowed_categories},
         )
 
     try:
@@ -52,6 +55,7 @@ async def do_appraise(request: Request, items: str = Form(...)):
                 "error": "Price service unavailable, try again later",
                 "paste": items,
                 "config_pct": config.buyback_percentage,
+                "allowed_categories": config.allowed_categories,
             },
         )
 
@@ -63,14 +67,8 @@ async def do_appraise(request: Request, items: str = Form(...)):
             rejected.append(RejectedItem(name=item.name, reason="not found"))
             continue
 
-        if config.allowed_categories and (
-            item.group_name not in config.allowed_categories
-            and item.category_name not in config.allowed_categories
-        ):
-            cats = ", ".join(config.allowed_categories)
-            rejected.append(
-                RejectedItem(name=item.name, reason=f"not accepted — we only buy {cats}")
-            )
+        if not any(c in (item.group_name, item.category_name) for c in config.allowed_categories):
+            rejected.append(RejectedItem(name=item.name, reason="category not accepted"))
             continue
 
         unit_price = item.buy_price * config.buyback_percentage
@@ -93,5 +91,6 @@ async def do_appraise(request: Request, items: str = Form(...)):
             "grand_total": grand_total,
             "paste": items,
             "config_pct": config.buyback_percentage,
+            "allowed_categories": config.allowed_categories,
         },
     )

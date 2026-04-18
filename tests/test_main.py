@@ -35,7 +35,7 @@ def test_post_empty_paste_shows_error():
 
 
 def test_post_appraise_shows_item_breakdown(monkeypatch):
-    monkeypatch.delenv("ALLOWED_CATEGORIES", raising=False)
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
     monkeypatch.setenv("BUYBACK_PERCENTAGE", "90")
     items = [make_item("Glacial Mass", 100, 10000.0, "Ice")]
 
@@ -45,13 +45,12 @@ def test_post_appraise_shows_item_breakdown(monkeypatch):
 
     assert response.status_code == 200
     assert "Glacial Mass" in response.text
-    # 90% of 10000 = 9000 per unit, 900000 total
     assert "9,000.00" in response.text
     assert "900,000.00" in response.text
 
 
 def test_post_appraise_grand_total(monkeypatch):
-    monkeypatch.delenv("ALLOWED_CATEGORIES", raising=False)
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
     monkeypatch.setenv("BUYBACK_PERCENTAGE", "90")
     items = [
         make_item("Glacial Mass", 10, 10000.0, "Ice"),
@@ -63,11 +62,10 @@ def test_post_appraise_grand_total(monkeypatch):
         response = client.post("/appraise", data={"items": "Glacial Mass\t10\nWhite Glaze\t20"})
 
     assert response.status_code == 200
-    # (10*9000) + (20*4500) = 90000 + 90000 = 180000
     assert "180,000.00" in response.text
 
 
-def test_post_appraise_rejects_disallowed_category(monkeypatch):
+def test_post_appraise_rejects_unlisted_category(monkeypatch):
     monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
     items = [make_item("Tritanium", 1000, 5.0, "Mineral")]
 
@@ -76,11 +74,11 @@ def test_post_appraise_rejects_disallowed_category(monkeypatch):
         response = client.post("/appraise", data={"items": "Tritanium\t1000"})
 
     assert response.status_code == 200
-    assert "not accepted" in response.text
+    assert "category not accepted" in response.text
     assert "Tritanium" in response.text
 
 
-def test_post_appraise_accepts_allowed_category(monkeypatch):
+def test_post_appraise_accepts_listed_category(monkeypatch):
     monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
     items = [make_item("Glacial Mass", 100, 10000.0, "Ice")]
 
@@ -90,7 +88,7 @@ def test_post_appraise_accepts_allowed_category(monkeypatch):
 
     assert response.status_code == 200
     assert "Glacial Mass" in response.text
-    assert "not accepted" not in response.text
+    assert "category not accepted" not in response.text
 
 
 def test_post_appraise_shows_error_on_api_failure():
@@ -103,8 +101,8 @@ def test_post_appraise_shows_error_on_api_failure():
 
 
 def test_post_appraise_rejects_not_found_item(monkeypatch):
-    monkeypatch.delenv("ALLOWED_CATEGORIES", raising=False)
-    items = [make_item("GarbageItem", 1, 0.0, "")]
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
+    items = [make_item("GarbageItem", 1, 0.0, "Ice")]
 
     client = get_client()
     with patch("app.main.appraise", new=AsyncMock(return_value=items)):
@@ -115,7 +113,6 @@ def test_post_appraise_rejects_not_found_item(monkeypatch):
 
 
 def test_post_appraise_accepts_item_matching_category_name(monkeypatch):
-    # category_name (not group_name) matches ALLOWED_CATEGORIES
     monkeypatch.setenv("ALLOWED_CATEGORIES", "Asteroid")
     item = AppraisalItem(name="Glacial Mass", quantity=10, buy_price=10000.0, group_name="Ice", category_name="Asteroid")
 
@@ -125,7 +122,19 @@ def test_post_appraise_accepts_item_matching_category_name(monkeypatch):
 
     assert response.status_code == 200
     assert "Glacial Mass" in response.text
-    assert "not accepted" not in response.text
+    assert "category not accepted" not in response.text
+
+
+def test_post_appraise_empty_allowed_blocks_everything(monkeypatch):
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "")
+    items = [make_item("Tritanium", 1000, 5.0, "Mineral")]
+
+    client = get_client()
+    with patch("app.main.appraise", new=AsyncMock(return_value=items)):
+        response = client.post("/appraise", data={"items": "Tritanium\t1000"})
+
+    assert response.status_code == 200
+    assert "category not accepted" in response.text
 
 
 def test_post_appraise_all_rejected_grand_total_zero(monkeypatch):

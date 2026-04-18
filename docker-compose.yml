@@ -5,5 +5,5 @@ services:
       - "8000:8000"
     environment:
       # Example values — override for your deployment
-      - ALLOWED_CATEGORIES=Ice
+      - ALLOWED_CATEGORIES=Ship,Asteroid,Material,Planetary Commodities,Reaction,Subsystem,Deployable,Ancient Relics,Decryptors
       - BUYBACK_PERCENTAGE=90
