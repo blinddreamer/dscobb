@@ -27,6 +27,24 @@ def test_get_root_renders_form():
     assert 'action="/appraise"' in response.text
 
 
+def test_get_root_hides_fixed_prices_when_none_configured(monkeypatch):
+    monkeypatch.delenv("FIXED_PRICES", raising=False)
+    client = get_client()
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "Fixed prices" not in response.text
+
+
+def test_get_root_shows_fixed_prices_when_configured(monkeypatch):
+    monkeypatch.setenv("FIXED_PRICES", "Heavy Water:500,Liquid Ozone:120")
+    client = get_client()
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "Fixed prices" in response.text
+    assert "Heavy Water (500.00 ISK)" in response.text
+    assert "Liquid Ozone (120.00 ISK)" in response.text
+
+
 def test_post_empty_paste_shows_error():
     client = get_client()
     response = client.post("/appraise", data={"items": "   "})
@@ -147,3 +165,48 @@ def test_post_appraise_all_rejected_grand_total_zero(monkeypatch):
 
     assert response.status_code == 200
     assert "0.00" in response.text
+
+
+def test_post_appraise_fixed_price_overrides_jita(monkeypatch):
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
+    monkeypatch.setenv("BUYBACK_PERCENTAGE", "80")
+    monkeypatch.setenv("FIXED_PRICES", "Heavy Water:500")
+    items = [make_item("Heavy Water", 100, 10000.0, "Ice")]
+
+    client = get_client()
+    with patch("app.main.appraise", new=AsyncMock(return_value=items)):
+        response = client.post("/appraise", data={"items": "Heavy Water\t100"})
+
+    assert response.status_code == 200
+    assert "Heavy Water" in response.text
+    assert "500.00" in response.text
+    assert "50,000.00" in response.text
+
+
+def test_post_appraise_fixed_price_bypasses_category_check(monkeypatch):
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "Ship")
+    monkeypatch.setenv("FIXED_PRICES", "Heavy Water:500")
+    items = [make_item("Heavy Water", 10, 10000.0, "Material")]
+
+    client = get_client()
+    with patch("app.main.appraise", new=AsyncMock(return_value=items)):
+        response = client.post("/appraise", data={"items": "Heavy Water\t10"})
+
+    assert response.status_code == 200
+    assert "Heavy Water" in response.text
+    assert "category not accepted" not in response.text
+
+
+def test_post_appraise_fixed_price_bypasses_not_found_check(monkeypatch):
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
+    monkeypatch.setenv("FIXED_PRICES", "Heavy Water:500")
+    items = [make_item("Heavy Water", 10, 0.0, "Ice")]
+
+    client = get_client()
+    with patch("app.main.appraise", new=AsyncMock(return_value=items)):
+        response = client.post("/appraise", data={"items": "Heavy Water\t10"})
+
+    assert response.status_code == 200
+    assert "Heavy Water" in response.text
+    assert "not found" not in response.text
+    assert "5,000.00" in response.text

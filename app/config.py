@@ -1,12 +1,14 @@
 import os
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List, Tuple
 
 
 @dataclass
 class Config:
     buyback_percentage: float
     allowed_categories: List[str]
+    fixed_prices: Dict[str, float]
+    fixed_price_display: List[Tuple[str, float]]
 
 
 def get_config() -> Config:
@@ -15,4 +17,24 @@ def get_config() -> Config:
     cats_str = os.getenv("ALLOWED_CATEGORIES", "")
     cats = [c.strip() for c in cats_str.split(",") if c.strip()]
 
-    return Config(buyback_percentage=pct, allowed_categories=cats)
+    fixed_str = os.getenv("FIXED_PRICES", "")
+    fixed_prices: Dict[str, float] = {}
+    fixed_price_display: List[Tuple[str, float]] = []
+    for entry in fixed_str.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        name, _, price = entry.rpartition(":")
+        if not name:
+            continue
+        name = name.strip()
+        price_value = float(price.strip())
+        fixed_prices[name.lower()] = price_value
+        fixed_price_display.append((name, price_value))
+
+    return Config(
+        buyback_percentage=pct,
+        allowed_categories=cats,
+        fixed_prices=fixed_prices,
+        fixed_price_display=fixed_price_display,
+    )

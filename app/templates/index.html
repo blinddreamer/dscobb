@@ -163,6 +163,15 @@
       Ore and ice must be compressed.
     </div>
 
+    {% if fixed_price_items %}
+    <div class="banner info">
+      Fixed prices:
+      {% for name, price in fixed_price_items %}
+      {{ name }} ({{ "{:,.2f}".format(price) }} ISK){% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
     {% if error %}
     <div class="banner error">{{ error }}</div>
     {% endif %}

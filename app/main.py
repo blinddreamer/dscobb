@@ -33,6 +33,7 @@ async def index(request: Request):
     return templates.TemplateResponse(request, "index.html", {
         "config_pct": config.buyback_percentage,
         "allowed_categories": config.allowed_categories,
+        "fixed_price_items": config.fixed_price_display,
     })
 
 
@@ -43,7 +44,13 @@ async def do_appraise(request: Request, items: str = Form(...)):
     if not items.strip():
         return templates.TemplateResponse(
             request, "index.html",
-            {"error": "Please paste some items", "paste": items, "config_pct": config.buyback_percentage, "allowed_categories": config.allowed_categories},
+            {
+                "error": "Please paste some items",
+                "paste": items,
+                "config_pct": config.buyback_percentage,
+                "allowed_categories": config.allowed_categories,
+                "fixed_price_items": config.fixed_price_display,
+            },
         )
 
     try:
@@ -56,6 +63,7 @@ async def do_appraise(request: Request, items: str = Form(...)):
                 "paste": items,
                 "config_pct": config.buyback_percentage,
                 "allowed_categories": config.allowed_categories,
+                "fixed_price_items": config.fixed_price_display,
             },
         )
 
@@ -63,15 +71,18 @@ async def do_appraise(request: Request, items: str = Form(...)):
     rejected: List[RejectedItem] = []
 
     for item in raw_items:
-        if item.buy_price <= 0.0:
-            rejected.append(RejectedItem(name=item.name, reason="not found"))
-            continue
+        fixed_price = config.fixed_prices.get(item.name.lower())
 
-        if not any(c in (item.group_name, item.category_name) for c in config.allowed_categories):
-            rejected.append(RejectedItem(name=item.name, reason="category not accepted"))
-            continue
+        if fixed_price is None:
+            if item.buy_price <= 0.0:
+                rejected.append(RejectedItem(name=item.name, reason="not found"))
+                continue
 
-        unit_price = item.buy_price * config.buyback_percentage
+            if not any(c in (item.group_name, item.category_name) for c in config.allowed_categories):
+                rejected.append(RejectedItem(name=item.name, reason="category not accepted"))
+                continue
+
+        unit_price = fixed_price if fixed_price is not None else item.buy_price * config.buyback_percentage
         accepted.append(
             AcceptedItem(
                 name=item.name,
@@ -92,5 +103,6 @@ async def do_appraise(request: Request, items: str = Form(...)):
             "paste": items,
             "config_pct": config.buyback_percentage,
             "allowed_categories": config.allowed_categories,
+            "fixed_price_items": config.fixed_price_display,
         },
     )

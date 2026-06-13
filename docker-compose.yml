@@ -7,3 +7,4 @@ services:
       # Example values — override for your deployment
       - ALLOWED_CATEGORIES=Ship,Asteroid,Material,Planetary Commodities,Reaction,Subsystem,Deployable,Ancient Relics,Decryptors
       - BUYBACK_PERCENTAGE=80
+      - FIXED_PRICES=Heavy Water:500
