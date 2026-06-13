@@ -6,7 +6,7 @@ def test_defaults_when_no_env_vars(monkeypatch):
     monkeypatch.delenv("ALLOWED_CATEGORIES", raising=False)
     monkeypatch.delenv("BUYBACK_PERCENTAGE", raising=False)
     config = get_config()
-    assert config.buyback_percentage == 0.90
+    assert config.buyback_percentage == 0.80
     assert config.allowed_categories == []
 
 

@@ -10,7 +10,7 @@ class Config:
 
 
 def get_config() -> Config:
-    pct = float(os.getenv("BUYBACK_PERCENTAGE", "90")) / 100.0
+    pct = float(os.getenv("BUYBACK_PERCENTAGE", "80")) / 100.0
 
     cats_str = os.getenv("ALLOWED_CATEGORIES", "")
     cats = [c.strip() for c in cats_str.split(",") if c.strip()]

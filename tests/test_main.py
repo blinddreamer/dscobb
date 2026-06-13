@@ -36,7 +36,7 @@ def test_post_empty_paste_shows_error():
 
 def test_post_appraise_shows_item_breakdown(monkeypatch):
     monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
-    monkeypatch.setenv("BUYBACK_PERCENTAGE", "90")
+    monkeypatch.setenv("BUYBACK_PERCENTAGE", "80")
     items = [make_item("Glacial Mass", 100, 10000.0, "Ice")]
 
     client = get_client()
@@ -45,13 +45,13 @@ def test_post_appraise_shows_item_breakdown(monkeypatch):
 
     assert response.status_code == 200
     assert "Glacial Mass" in response.text
-    assert "9,000.00" in response.text
-    assert "900,000.00" in response.text
+    assert "8,000.00" in response.text
+    assert "800,000.00" in response.text
 
 
 def test_post_appraise_grand_total(monkeypatch):
     monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
-    monkeypatch.setenv("BUYBACK_PERCENTAGE", "90")
+    monkeypatch.setenv("BUYBACK_PERCENTAGE", "80")
     items = [
         make_item("Glacial Mass", 10, 10000.0, "Ice"),
         make_item("White Glaze", 20, 5000.0, "Ice"),
@@ -62,7 +62,7 @@ def test_post_appraise_grand_total(monkeypatch):
         response = client.post("/appraise", data={"items": "Glacial Mass\t10\nWhite Glaze\t20"})
 
     assert response.status_code == 200
-    assert "180,000.00" in response.text
+    assert "160,000.00" in response.text
 
 
 def test_post_appraise_rejects_unlisted_category(monkeypatch):
