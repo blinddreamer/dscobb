@@ -4,12 +4,14 @@ from typing import List
 
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_config
 from app.janice import appraise, AppraisalError
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
 
@@ -27,14 +29,19 @@ class RejectedItem:
     reason: str
 
 
-@app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    config = get_config()
-    return templates.TemplateResponse(request, "index.html", {
+def _base_context(request: Request, config) -> dict:
+    return {
         "config_pct": config.buyback_percentage,
         "allowed_categories": config.allowed_categories,
         "fixed_price_items": config.fixed_price_display,
-    })
+        "og_image": str(request.url_for("static", path="laboon.jpg")),
+    }
+
+
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    config = get_config()
+    return templates.TemplateResponse(request, "index.html", _base_context(request, config))
 
 
 @app.post("/appraise", response_class=HTMLResponse)
@@ -45,11 +52,9 @@ async def do_appraise(request: Request, items: str = Form(...)):
         return templates.TemplateResponse(
             request, "index.html",
             {
+                **_base_context(request, config),
                 "error": "Please paste some items",
                 "paste": items,
-                "config_pct": config.buyback_percentage,
-                "allowed_categories": config.allowed_categories,
-                "fixed_price_items": config.fixed_price_display,
             },
         )
 
@@ -59,11 +64,9 @@ async def do_appraise(request: Request, items: str = Form(...)):
         return templates.TemplateResponse(
             request, "index.html",
             {
+                **_base_context(request, config),
                 "error": "Price service unavailable, try again later",
                 "paste": items,
-                "config_pct": config.buyback_percentage,
-                "allowed_categories": config.allowed_categories,
-                "fixed_price_items": config.fixed_price_display,
             },
         )
 
@@ -97,12 +100,10 @@ async def do_appraise(request: Request, items: str = Form(...)):
     return templates.TemplateResponse(
         request, "index.html",
         {
+            **_base_context(request, config),
             "accepted": accepted,
             "rejected": rejected,
             "grand_total": grand_total,
             "paste": items,
-            "config_pct": config.buyback_percentage,
-            "allowed_categories": config.allowed_categories,
-            "fixed_price_items": config.fixed_price_display,
         },
     )
