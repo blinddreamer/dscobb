@@ -10,6 +10,15 @@ docker compose up
 
 Open `http://localhost:8000`
 
+### Local dev (without Docker)
+
+```bash
+pip install -r requirements-dev.txt
+uvicorn app.main:app --reload
+```
+
+Run tests with `pytest`.
+
 ## Config
 
 Copy `.env.example` to `.env` and fill in `JANICE_API_KEY` before running.
@@ -27,3 +36,5 @@ ALLOWED_CATEGORIES=Ship,Asteroid,Material,Planetary Commodities,Reaction,Subsyst
 BUYBACK_PERCENTAGE=80
 FIXED_PRICES=Heavy Water:500,Liquid Ozone:120
 ```
+
+Pastes are capped at 200 items per request.
