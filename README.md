@@ -12,8 +12,11 @@ Open `http://localhost:8000`
 
 ## Config
 
+Copy `.env.example` to `.env` and fill in `JANICE_API_KEY` before running.
+
 | Variable | Default | Description |
 |---|---|---|
+| `JANICE_API_KEY` | *(required)* | API key for the Janice pricing service |
 | `BUYBACK_PERCENTAGE` | `80` | % of Jita buy price offered |
 | `ALLOWED_CATEGORIES` | *(empty = nothing priced)* | Comma-separated EVE categories to accept |
 | `FIXED_PRICES` | *(empty)* | Comma-separated `Item Name:price` pairs that override the Jita-based price with a flat ISK price, regardless of category |

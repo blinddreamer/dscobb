@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from typing import List
@@ -9,6 +10,11 @@ from fastapi.templating import Jinja2Templates
 
 from app.config import get_config
 from app.janice import appraise, AppraisalError
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+MAX_ITEMS = 200
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
@@ -58,9 +64,21 @@ async def do_appraise(request: Request, items: str = Form(...)):
             },
         )
 
+    line_count = len([line for line in items.splitlines() if line.strip()])
+    if line_count > MAX_ITEMS:
+        return templates.TemplateResponse(
+            request, "index.html",
+            {
+                **_base_context(request, config),
+                "error": f"Too many items — please paste at most {MAX_ITEMS} at a time.",
+                "paste": items,
+            },
+        )
+
     try:
         raw_items = await appraise(items)
-    except AppraisalError:
+    except AppraisalError as exc:
+        logger.warning("Appraisal failed: %s", exc)
         return templates.TemplateResponse(
             request, "index.html",
             {
@@ -77,6 +95,10 @@ async def do_appraise(request: Request, items: str = Form(...)):
         fixed_price = config.fixed_prices.get(item.name.lower())
 
         if fixed_price is None:
+            if item.lookup_failed:
+                rejected.append(RejectedItem(name=item.name, reason="price lookup failed"))
+                continue
+
             if item.buy_price <= 0.0:
                 rejected.append(RejectedItem(name=item.name, reason="not found"))
                 continue

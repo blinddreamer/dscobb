@@ -52,3 +52,15 @@ def test_empty_fixed_prices(monkeypatch):
     monkeypatch.setenv("FIXED_PRICES", "")
     config = get_config()
     assert config.fixed_prices == {}
+
+
+def test_invalid_buyback_percentage_falls_back_to_default(monkeypatch):
+    monkeypatch.setenv("BUYBACK_PERCENTAGE", "not-a-number")
+    config = get_config()
+    assert config.buyback_percentage == 0.80
+
+
+def test_invalid_fixed_price_entry_is_skipped_not_fatal(monkeypatch):
+    monkeypatch.setenv("FIXED_PRICES", "Heavy Water:not-a-number,Liquid Ozone:120")
+    config = get_config()
+    assert config.fixed_prices == {"liquid ozone": 120.0}

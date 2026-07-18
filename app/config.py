@@ -1,6 +1,9 @@
+import logging
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -12,7 +15,12 @@ class Config:
 
 
 def get_config() -> Config:
-    pct = float(os.getenv("BUYBACK_PERCENTAGE", "80")) / 100.0
+    raw_pct = os.getenv("BUYBACK_PERCENTAGE", "80")
+    try:
+        pct = float(raw_pct) / 100.0
+    except ValueError:
+        logger.warning("Invalid BUYBACK_PERCENTAGE=%r, falling back to 80", raw_pct)
+        pct = 0.80
 
     cats_str = os.getenv("ALLOWED_CATEGORIES", "")
     cats = [c.strip() for c in cats_str.split(",") if c.strip()]
@@ -28,7 +36,11 @@ def get_config() -> Config:
         if not name:
             continue
         name = name.strip()
-        price_value = float(price.strip())
+        try:
+            price_value = float(price.strip())
+        except ValueError:
+            logger.warning("Invalid FIXED_PRICES entry %r, skipping", entry)
+            continue
         fixed_prices[name.lower()] = price_value
         fixed_price_display.append((name, price_value))
 

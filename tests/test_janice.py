@@ -120,3 +120,47 @@ async def test_appraise_empty_items_list():
     with patch("app.janice.httpx.AsyncClient", return_value=mock_cm):
         result = await appraise("SomeUnknownItem\t1")
     assert result == []
+
+
+async def test_appraise_marks_lookup_failed_on_esi_error():
+    janice_response = MagicMock()
+    janice_response.status_code = 200
+    janice_response.json.return_value = SAMPLE_RESPONSE
+    janice_response.raise_for_status = MagicMock()
+
+    async def failing_get(url, **kwargs):
+        raise httpx.RequestError("boom", request=MagicMock())
+
+    mock_client = AsyncMock()
+    mock_client.post = AsyncMock(return_value=janice_response)
+    mock_client.get = failing_get
+
+    mock_cm = MagicMock()
+    mock_cm.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_cm.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("app.janice.httpx.AsyncClient", return_value=mock_cm):
+        result = await appraise("Glacial Mass\t100\nTritanium\t1000")
+
+    assert all(item.lookup_failed for item in result)
+    assert all(item.group_name == "" for item in result)
+
+
+async def test_appraise_caches_esi_lookups_across_calls():
+    import app.janice as janice_module
+
+    mock_cm = make_mock_client(200, SAMPLE_RESPONSE)
+    with patch("app.janice.httpx.AsyncClient", return_value=mock_cm):
+        await appraise("Glacial Mass\t100\nTritanium\t1000")
+        assert 16262 in janice_module._type_group_cache
+
+        # A second call should hit the cache and not need ESI GETs at all;
+        # replacing `get` with a failing stub proves it wasn't called.
+        async def failing_get(url, **kwargs):
+            raise AssertionError("ESI should not be called again once cached")
+
+        mock_cm.__aenter__.return_value.get = failing_get
+        result = await appraise("Glacial Mass\t100\nTritanium\t1000")
+
+    assert result[0].group_name == "Ice"
+    assert result[0].category_name == "Asteroid"

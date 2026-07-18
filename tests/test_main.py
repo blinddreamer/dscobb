@@ -197,6 +197,30 @@ def test_post_appraise_fixed_price_bypasses_category_check(monkeypatch):
     assert "category not accepted" not in response.text
 
 
+def test_post_appraise_rejects_item_with_failed_lookup(monkeypatch):
+    monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
+    item = AppraisalItem(
+        name="Glacial Mass", quantity=100, buy_price=10000.0,
+        group_name="", category_name="", lookup_failed=True,
+    )
+
+    client = get_client()
+    with patch("app.main.appraise", new=AsyncMock(return_value=[item])):
+        response = client.post("/appraise", data={"items": "Glacial Mass\t100"})
+
+    assert response.status_code == 200
+    assert "price lookup failed" in response.text
+
+
+def test_post_appraise_too_many_items_rejected():
+    client = get_client()
+    paste = "\n".join(f"Item{i}\t1" for i in range(201))
+    response = client.post("/appraise", data={"items": paste})
+
+    assert response.status_code == 200
+    assert "Too many items" in response.text
+
+
 def test_post_appraise_fixed_price_bypasses_not_found_check(monkeypatch):
     monkeypatch.setenv("ALLOWED_CATEGORIES", "Ice")
     monkeypatch.setenv("FIXED_PRICES", "Heavy Water:500")

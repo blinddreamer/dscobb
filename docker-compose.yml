@@ -5,6 +5,7 @@ services:
       - "8000:8000"
     environment:
       # Example values — override for your deployment
+      - JANICE_API_KEY=${JANICE_API_KEY}
       - ALLOWED_CATEGORIES=Ship,Asteroid,Material,Planetary Commodities,Reaction,Subsystem,Deployable,Ancient Relics,Decryptors
       - BUYBACK_PERCENTAGE=80
       - FIXED_PRICES=Heavy Water:500
