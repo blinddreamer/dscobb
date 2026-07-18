@@ -1,255 +1,119 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Laboon's Buyback</title>
+{% extends "base.html" %}
 
-    <meta property="og:title" content="Laboon's Buyback" />
-    <meta property="og:description" content="Paste your items, get ISK quotes based on Jita buy prices." />
-    <meta property="og:image" content="{{ og_image }}" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="{{ request.url }}" />
+{% block content %}
+<header class="mb-10 text-center">
+  <h1 class="font-head" style="font-size:44px; letter-spacing:2px; background:var(--title-gradient); -webkit-background-clip:text; background-clip:text; color:transparent;">
+    LABOON'S BUYBACK
+  </h1>
+  <p class="font-head mt-2" style="font-size:14px; letter-spacing:4px; color: var(--tagline);">
+    Prices are {{ "%.0f"|format((config_pct or 0.8) * 100) }}% of Jita buy
+  </p>
+</header>
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Laboon's Buyback" />
-    <meta name="twitter:description" content="Paste your items, get ISK quotes based on Jita buy prices." />
-    <meta name="twitter:image" content="{{ og_image }}" />
-    <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-      body {
-        font-family: "Courier New", monospace;
-        background: #0d0d1a;
-        color: #c8c8d4;
-        max-width: 960px;
-        margin: 0 auto;
-        padding: 32px 20px;
-      }
-      h1 {
-        color: #c8a951;
-        font-size: 1.8rem;
-        margin-bottom: 4px;
-      }
-      .subtitle {
-        color: #666;
-        font-size: 0.85rem;
-        margin-bottom: 28px;
-      }
-      textarea {
-        width: 100%;
-        height: 180px;
-        background: #0a0a14;
-        color: #c8c8d4;
-        border: 1px solid #2a2a44;
-        padding: 12px;
-        font-family: "Courier New", monospace;
-        font-size: 13px;
-        resize: vertical;
-      }
-      textarea:focus {
-        outline: 1px solid #c8a951;
-      }
-      button {
-        background: #c8a951;
-        color: #0d0d1a;
-        border: none;
-        padding: 10px 28px;
-        font-size: 14px;
-        font-weight: bold;
-        cursor: pointer;
-        margin-top: 10px;
-        font-family: "Courier New", monospace;
-        letter-spacing: 0.05em;
-      }
-      button:hover {
-        background: #e0c060;
-      }
-      .banner {
-        padding: 12px 16px;
-        margin: 20px 0;
-        font-size: 0.9rem;
-      }
-      .banner.error {
-        background: #2a0a0a;
-        border-left: 3px solid #c84040;
-        color: #ff7070;
-      }
-      h2 {
-        color: #c8a951;
-        font-size: 1.1rem;
-        margin: 28px 0 10px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.88rem;
-      }
-      th {
-        background: #16162a;
-        color: #888;
-        text-align: left;
-        padding: 8px 12px;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.08em;
-        border-bottom: 1px solid #2a2a44;
-      }
-      td {
-        padding: 7px 12px;
-        border-bottom: 1px solid #16162a;
-      }
-      tr:hover td {
-        background: #13132a;
-      }
-      .num {
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-      }
-      .grand-total {
-        text-align: right;
-        font-size: 1.3rem;
-        color: #c8a951;
-        margin-top: 14px;
-        padding-right: 12px;
-      }
-      .rejected-section h2 {
-        color: #c84040;
-      }
-      .rejected-section th {
-        background: #1a0a0a;
-      }
-      .rejected-section td.reason {
-        color: #c84040;
-      }
-      .empty {
-        color: #555;
-        font-size: 0.88rem;
-        margin-top: 10px;
-      }
-      .banner.info {
-        background: #0a1a2a;
-        border-left: 3px solid #4080c8;
-        color: #7aaad4;
-      }
-      .meta {
-        font-size: 0.82rem;
-        color: #555;
-        margin-bottom: 20px;
-        line-height: 1.8;
-      }
-      .meta a {
-        color: #7aaad4;
-        text-decoration: none;
-      }
-      .meta a:hover {
-        text-decoration: underline;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Laboon's Buyback</h1>
-    <p class="subtitle">
-      Paste your items below. Prices are {{ "%.0f"|format((config_pct or 0.8) *
-      100) }}% of Jita buy.
-    </p>
+{% if allowed_categories %}
+<div class="banner banner-info px-4 py-2.5 mb-3">Buying: {{ allowed_categories | join(", ") }}</div>
+{% else %}
+<div class="banner banner-info px-4 py-2.5 mb-3">No categories configured — nothing will be priced.</div>
+{% endif %}
 
-    {% if allowed_categories %}
-    <div class="banner info">Buying: {{ allowed_categories | join(", ") }}</div>
-    {% else %}
-    <div class="banner info">No categories configured — nothing will be priced.</div>
-    {% endif %}
+{% if fixed_price_items %}
+<div class="banner banner-info px-4 py-2.5 mb-3">
+  Fixed prices:
+  {% for name, price in fixed_price_items %}
+  {{ name }} ({{ "{:,.2f}".format(price) }} ISK){% if not loop.last %}, {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
 
-    <div class="meta">
-      Buying from:
-      <a href="https://evemaps.dotlan.net/system/4-HWWF" target="_blank">4-HWWF</a>,
-      <a href="https://evemaps.dotlan.net/system/3A1P-N" target="_blank">3A1P-N</a>,
-      <a href="https://evemaps.dotlan.net/system/OY-UZ1" target="_blank">OY-UZ1</a>
-      &nbsp;·&nbsp;
-      Contract to: <a href="https://evewho.com/character/2118023807" target="_blank">Laboon</a>
-      <br>
-      Ore and ice must be compressed.
-    </div>
+<div class="text-sm text-muted mb-4" style="line-height:1.8;">
+  Buying from:
+  <a href="https://evemaps.dotlan.net/system/4-HWWF" target="_blank" class="sh-link">4-HWWF</a>,
+  <a href="https://evemaps.dotlan.net/system/3A1P-N" target="_blank" class="sh-link">3A1P-N</a>,
+  <a href="https://evemaps.dotlan.net/system/OY-UZ1" target="_blank" class="sh-link">OY-UZ1</a>
+  &nbsp;·&nbsp;
+  Contract to: <a href="https://evewho.com/character/2118023807" target="_blank" class="sh-link">Laboon</a>
+  <br>
+  Ore and ice must be compressed.
+</div>
 
-    {% if fixed_price_items %}
-    <div class="banner info">
-      Fixed prices:
-      {% for name, price in fixed_price_items %}
-      {{ name }} ({{ "{:,.2f}".format(price) }} ISK){% if not loop.last %}, {% endif %}
-      {% endfor %}
-    </div>
-    {% endif %}
+{% if error %}
+<div class="banner banner-error px-4 py-2.5 mb-3">{{ error }}</div>
+{% endif %}
 
-    {% if error %}
-    <div class="banner error">{{ error }}</div>
-    {% endif %}
+<div class="panel p-4 mb-8">
+  <form method="post" action="/appraise">
+    <textarea
+      name="items"
+      class="input-dark w-full px-3 py-3 text-sm"
+      style="height:180px; resize:vertical;"
+      placeholder="Omen Navy Issue&#10;Osprey Navy Issue&#10;Vodka?&#10;&#10;Paste EVE multibuy format here..."
+    >{{ paste or "" }}</textarea>
+    <button type="submit" class="btn btn-primary px-6 py-2.5 mt-3 text-sm">Get Buyback Quote</button>
+  </form>
+</div>
 
-    <form method="post" action="/appraise">
-      <textarea
-        name="items"
-        placeholder="Omen Navy Issue&#10;Osprey Navy Issue&#10;Vodka?&#10;&#10;Paste EVE multibuy format here..."
-      >
-{{ paste or "" }}</textarea
-      >
-      <br />
-      <button type="submit">Get Buyback Quote</button>
-    </form>
+{% if accepted is defined %}
 
-    {% if accepted is defined %}
-
-    <h2>Accepted Items</h2>
-    {% if accepted %}
-    <table>
+<div class="panel overflow-hidden mb-8">
+  <div class="panel-header px-4 py-3">
+    <span class="font-head" style="font-size:13px; letter-spacing:2px; color:var(--head);">Accepted Items</span>
+  </div>
+  {% if accepted %}
+  <div class="sh-table-wrap">
+    <table class="sh-table w-full text-left">
       <thead>
         <tr>
-          <th>Item</th>
-          <th class="num">Qty</th>
-          <th class="num">Unit Price (ISK)</th>
-          <th class="num">Subtotal (ISK)</th>
+          <th class="px-4 py-3">Item</th>
+          <th class="px-4 py-3 text-right">Qty</th>
+          <th class="px-4 py-3 text-right">Unit Price (ISK)</th>
+          <th class="px-4 py-3 text-right">Subtotal (ISK)</th>
         </tr>
       </thead>
       <tbody>
         {% for item in accepted %}
-        <tr>
-          <td>{{ item.name }}</td>
-          <td class="num">{{ "{:,}".format(item.quantity) }}</td>
-          <td class="num">{{ "{:,.2f}".format(item.unit_price) }}</td>
-          <td class="num">{{ "{:,.2f}".format(item.subtotal) }}</td>
+        <tr class="row-fade" style="animation-delay: {{ loop.index0 * 0.04 }}s;">
+          <td class="px-4 py-3">{{ item.name }}</td>
+          <td class="px-4 py-3 text-right figure-accepted">{{ "{:,}".format(item.quantity) }}</td>
+          <td class="px-4 py-3 text-right figure-accepted">{{ "{:,.2f}".format(item.unit_price) }}</td>
+          <td class="px-4 py-3 text-right figure-accepted">{{ "{:,.2f}".format(item.subtotal) }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    <div class="grand-total">
-      Total: {{ "{:,.2f}".format(grand_total) }} ISK
-    </div>
-    {% else %}
-    <p class="empty">No accepted items.</p>
-    <div class="grand-total">
-      Total: {{ "{:,.2f}".format(grand_total) }} ISK
-    </div>
-    {% endif %} {% if rejected %}
-    <div class="rejected-section">
-      <h2>Rejected Items</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Reason</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in rejected %}
-          <tr>
-            <td>{{ item.name }}</td>
-            <td class="reason">{{ item.reason }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% endif %} {% endif %}
-  </body>
-</html>
+  </div>
+  {% else %}
+  <p class="px-4 py-6 text-center text-muted">No accepted items.</p>
+  {% endif %}
+  <div class="px-4 py-4 text-right font-head" style="font-size:1.4rem; letter-spacing:1px; color:var(--head); border-top:1px solid var(--line);">
+    Total: {{ "{:,.2f}".format(grand_total) }} ISK
+  </div>
+</div>
+
+{% if rejected %}
+<div class="panel overflow-hidden mb-8">
+  <div class="panel-header px-4 py-3">
+    <span class="font-head" style="font-size:13px; letter-spacing:2px; color:var(--rejected);">Rejected Items</span>
+  </div>
+  <div class="sh-table-wrap">
+    <table class="sh-table w-full text-left">
+      <thead>
+        <tr>
+          <th class="px-4 py-3">Item</th>
+          <th class="px-4 py-3">Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in rejected %}
+        <tr class="row-fade" style="animation-delay: {{ loop.index0 * 0.04 }}s;">
+          <td class="px-4 py-3">{{ item.name }}</td>
+          <td class="px-4 py-3 figure-rejected">{{ item.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

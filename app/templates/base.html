@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function () {
+      var theme = localStorage.getItem("theme") || "dark";
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <title>{% block title %}Laboon's Buyback{% endblock %}</title>
+
+  <meta property="og:title" content="Laboon's Buyback" />
+  <meta property="og:description" content="Paste your items, get ISK quotes based on Jita buy prices." />
+  <meta property="og:image" content="{{ og_image }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ request.url }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Laboon's Buyback" />
+  <meta name="twitter:description" content="Paste your items, get ISK quotes based on Jita buy prices." />
+  <meta name="twitter:image" content="{{ og_image }}" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@300;400;500;600;700&family=Saira:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg-a: #0a0c10;
+      --bg-b: #101318;
+      --panel: rgba(18, 21, 26, .84);
+      --line: rgba(255, 255, 255, .10);
+      --accent: #ffffff;
+      --text: #c8d2d6;
+      --head: #eef4f6;
+      --muted: #7c8890;
+      --muted2: #626c73;
+      --tagline: #9aa7ac;
+      --grid-line: rgba(255, 255, 255, .08);
+      --btn-border: rgba(255, 255, 255, .28);
+      --btn-hover-bg: rgba(255, 255, 255, .10);
+      --btn-primary-border: rgba(255, 255, 255, .55);
+      --btn-primary-bg: transparent;
+      --btn-primary-color: #eef4f6;
+      --btn-primary-hover-bg: rgba(255, 255, 255, .10);
+      --btn-primary-hover-color: #eef4f6;
+      --input-bg: rgba(16, 19, 24, .85);
+      --input-border: rgba(45, 52, 58, 1);
+      --topbar-bg: #14171d;
+      --title-gradient: #eef4f6;
+      --row-hover: rgba(255, 255, 255, .06);
+      --accepted: #ffffff;
+      --rejected: #e08a8a;
+      --banner-error-bg: rgba(80, 20, 20, .35);
+      --banner-error-border: rgba(224, 100, 100, .6);
+      --banner-info-bg: rgba(255, 255, 255, .04);
+      --banner-info-border: rgba(255, 255, 255, .18);
+    }
+
+    html[data-theme="light"] {
+      --bg-a: #f4f4f1;
+      --bg-b: #e6e6e2;
+      --panel: rgba(255, 255, 255, .72);
+      --line: rgba(0, 0, 0, .12);
+      --accent: #1a1a1a;
+      --text: #33363a;
+      --head: #111111;
+      --muted: #6b6f74;
+      --muted2: #7a7e83;
+      --tagline: #45484c;
+      --grid-line: rgba(0, 0, 0, .12);
+      --btn-border: rgba(0, 0, 0, .35);
+      --btn-hover-bg: rgba(0, 0, 0, .08);
+      --btn-primary-border: rgba(0, 0, 0, .6);
+      --btn-primary-bg: transparent;
+      --btn-primary-color: #111;
+      --btn-primary-hover-bg: #111;
+      --btn-primary-hover-color: #fff;
+      --input-bg: rgba(255, 255, 255, .6);
+      --input-border: rgba(0, 0, 0, .16);
+      --topbar-bg: #ececea;
+      --title-gradient: linear-gradient(180deg, #111111, #4a4d52);
+      --row-hover: rgba(0, 0, 0, .05);
+      --accepted: #111111;
+      --rejected: #a03a3a;
+      --banner-error-bg: rgba(220, 90, 90, .10);
+      --banner-error-border: rgba(160, 40, 40, .5);
+      --banner-info-bg: rgba(0, 0, 0, .03);
+      --banner-info-border: rgba(0, 0, 0, .14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      position: relative;
+      background: linear-gradient(180deg, var(--bg-a) 0%, var(--bg-b) 50%, var(--bg-a) 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: 'Saira', sans-serif;
+      font-variant-numeric: tabular-nums;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image:
+        radial-gradient(820px 540px at 82% 90%, rgba(255, 255, 255, .05), transparent),
+        radial-gradient(820px 540px at 12% 6%, rgba(255, 255, 255, .06), transparent),
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: auto, auto, 46px 46px, 46px 46px;
+      mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 75%);
+    }
+
+    .font-head {
+      font-family: 'Saira Condensed', sans-serif;
+      text-transform: uppercase;
+    }
+
+    .font-data {
+      font-family: 'IBM Plex Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .panel {
+      background: transparent;
+      border: 1px solid var(--line);
+      border-top: 2px solid var(--accent);
+      backdrop-filter: blur(4px);
+    }
+
+    .topbar {
+      background: var(--topbar-bg);
+      border: 1px solid var(--line);
+      border-top: 2px solid var(--accent);
+    }
+
+    .panel-header {
+      background: transparent;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-dim { color: #8a9096; }
+    html[data-theme="light"] .brand-dim { color: #6b6f74; }
+
+    .sh-link { color: var(--text); transition: color .2s; }
+    .sh-link:hover { color: var(--accent); }
+
+    .sh-table thead th {
+      font-family: 'Saira Condensed', sans-serif;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .sh-table tbody tr {
+      border-bottom: 1px solid var(--line);
+      transition: background .2s;
+    }
+    .sh-table tbody tr:hover { background: var(--row-hover); }
+
+    .figure-accepted {
+      font-family: 'IBM Plex Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      color: var(--accepted);
+    }
+    .figure-rejected {
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--rejected);
+    }
+    .text-muted { color: var(--muted); }
+    .text-muted2 { color: var(--muted2); }
+
+    .btn {
+      font-family: 'Saira Condensed', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: 1px solid var(--btn-border);
+      color: var(--head);
+      background: transparent;
+      border-radius: 0 !important;
+      transition: background .2s, color .2s, border-color .2s;
+      cursor: pointer;
+    }
+    .btn:hover { background: var(--btn-hover-bg); }
+
+    .btn-primary {
+      border: 1px solid var(--btn-primary-border);
+      background: var(--btn-primary-bg);
+      color: var(--btn-primary-color);
+    }
+    .btn-primary:hover { background: var(--btn-primary-hover-bg); color: var(--btn-primary-hover-color); }
+
+    .input-dark {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .input-dark:focus { outline: 1px solid var(--accent); }
+
+    .banner {
+      border-radius: 0;
+      font-size: 13px;
+    }
+    .banner-info {
+      background: var(--banner-info-bg);
+      border: 1px solid var(--banner-info-border);
+      color: var(--text);
+    }
+    .banner-error {
+      background: var(--banner-error-bg);
+      border: 1px solid var(--banner-error-border);
+      color: var(--rejected);
+    }
+
+    .row-fade {
+      opacity: 0;
+      animation: fadeup .4s ease-out forwards;
+    }
+    @keyframes fadeup {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      .sh-table-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-overlay" aria-hidden="true"></div>
+
+  <header class="mt-4 max-w-4xl w-full mx-auto px-4">
+    <div class="topbar px-4 py-3 flex items-center justify-between">
+      <a href="/" class="font-head text-sm md:text-base" style="letter-spacing:3px;">
+        LABOON'S <span class="brand-dim">BUYBACK</span>
+      </a>
+      <button type="button" id="theme-toggle" onclick="toggleTheme()" class="btn px-2 py-1 text-xs" style="letter-spacing:1px;">Light Mode</button>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="text-center font-head pt-4 pb-6" style="color:#4a4e54; font-size:10px; letter-spacing:2px;">
+    © LABOON'S BUYBACK · NOT AFFILIATED WITH <a href="https://fenris.com" target="_blank" style="color:inherit; text-decoration:none;">FENRIS CREATIONS</a>
+  </div>
+
+  <script>
+    function updateThemeToggleLabel() {
+      var theme = document.documentElement.getAttribute("data-theme");
+      var btn = document.getElementById("theme-toggle");
+      if (btn) btn.textContent = theme === "light" ? "Dark Mode" : "Light Mode";
+    }
+
+    function toggleTheme() {
+      var current = document.documentElement.getAttribute("data-theme");
+      var next = current === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      updateThemeToggleLabel();
+    }
+
+    updateThemeToggleLabel();
+  </script>
+</body>
+</html>
